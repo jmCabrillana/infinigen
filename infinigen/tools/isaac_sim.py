@@ -6,15 +6,23 @@
 # Acknowledgement: This file draws inspiration from https://docs.omniverse.nvidia.com/isaacsim/latest/index.html
 
 import json
-
 import numpy as np
+
+# from omni.isaac.kit import SimulationApp
+# CONFIG = {"renderer": "RayTracedLighting", "headless": False}
+# simulation_app = SimulationApp(launch_config=CONFIG)
+
+# from omni.isaac.lab.app import AppLauncher
+# app_launcher = AppLauncher(headless=True)
+# simulation_app = app_launcher.app
+
 import omni
 from omni.isaac.core import World
 from omni.isaac.core.prims import XFormPrim
 from omni.isaac.core.utils.extensions import enable_extension
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.prims import create_prim
-from omni.isaac.kit import SimulationApp
+
 from omni.kit.commands import execute as omni_exec
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
@@ -25,9 +33,6 @@ from omni.isaac.core.utils.types import ArticulationAction
 from omni.isaac.wheeled_robots.robots import WheeledRobot
 from omni.physx.scripts import utils
 
-CONFIG = {"renderer": "RayTracedLighting", "headless": False}
-simulation_app = SimulationApp(launch_config=CONFIG)
-
 
 class RobotController(BaseController):
     def __init__(self):
@@ -36,6 +41,9 @@ class RobotController(BaseController):
     def forward(self):
         return ArticulationAction(joint_velocities=[2, 2])
 
+class InfinigenIsaacSceneCFG:
+        scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/my_export/export_scene.blend/export_scene.usdc'
+        json_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/indoors/coarse/solve_state.json'
 
 class InfinigenIsaacScene(object):
     def __init__(self, cfg):
@@ -55,11 +63,11 @@ class InfinigenIsaacScene(object):
 
     def _add_infinigen_scene(self):
         create_prim(
-            prim_path="/World/Support",
+            prim_path="/World/Support0",
             usd_path=self.cfg.scene_path,
             semantic_label="scene",
         )
-        self._support = XFormPrim(prim_path="/World/Support", name="Support")
+        self._support = XFormPrim(prim_path="/World/Support0", name="Support0")
 
         stage = omni.usd.get_context().get_stage()
 
@@ -131,19 +139,19 @@ class InfinigenIsaacScene(object):
             create_default_xform=True,
         )
 
-    def _get_camera_loc(self):
-        stage = omni.usd.get_context().get_stage()
-        prim = stage.GetPrimAtPath("/World/Support/CameraRigs_0_0")
-        xform = UsdGeom.Xformable(prim)
-        transform_matrix = xform.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-        translation = transform_matrix.ExtractTranslation()
-        translation[2] = 0
-        return translation, [1, 0, 0, 0]
+    # def _get_camera_loc(self):
+    #     stage = omni.usd.get_context().get_stage()
+    #     prim = stage.GetPrimAtPath("/World/Support/CameraRigs_0_0")
+    #     xform = UsdGeom.Xformable(prim)
+    #     transform_matrix = xform.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+    #     translation = transform_matrix.ExtractTranslation()
+    #     translation[2] = 0
+    #     return translation, [1, 0, 0, 0]
 
     def _add_robot(self):
         robot_path = get_assets_root_path() + "/Isaac/Robots/Jetbot/jetbot.usd"
-        init_pos, _ = self._get_camera_loc()
-        init_pos[-1] += 0.3
+        # init_pos, _ = self._get_camera_loc()
+        # init_pos[-1] += 0.3
         self.robot = self.scene.add(
             WheeledRobot(
                 prim_path="/World/Robot",
@@ -151,7 +159,7 @@ class InfinigenIsaacScene(object):
                 wheel_dof_names=["left_wheel_joint", "right_wheel_joint"],
                 create_robot=True,
                 usd_path=robot_path,
-                position=init_pos,
+                # position=init_pos,
             )
         )
         self.robot.set_local_scale(np.array([4, 4, 4]))
@@ -179,7 +187,8 @@ if __name__ == "__main__":
     parser.add_argument("--json-path", type=str)
     args = parser.parse_args()
 
-    scene = InfinigenIsaacScene(args)
+    # scene = InfinigenIsaacScene(args)
+    scene = InfinigenIsaacScene(InfinigenIsaacScene)
 
     scene.reset()
     scene.run()

@@ -999,7 +999,7 @@ def main(args):
             omniverse_export=args.omniverse,
         )
         # wanted to use shutil here but kept making corrupted files
-        subprocess.call(["zip", "-r", str(folder.with_suffix(".zip")), str(folder)])
+        # subprocess.call(["zip", "-r", str(folder.with_suffix(".zip")), str(folder)])
 
     bpy.ops.wm.quit_blender()
 
