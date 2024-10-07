@@ -469,9 +469,12 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
 
     if bake_obj:
         logging.info(f"Baking {bake_type} pass")
-        bpy.ops.object.bake(
-            type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL"
-        )
+        try:
+            bpy.ops.object.bake(
+                type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL"
+            )
+        except Exception as e:
+            print(e)
         img.filepath_raw = str(file_path)
         if not export_usd:
             img.save()
@@ -850,7 +853,7 @@ def export_single_obj(
 
     return export_file
 
-
+bpy.context.scene
 @gin.configurable
 def export_curr_scene(
     output_folder: Path,
@@ -988,7 +991,9 @@ def main(args):
         if not blendfile.suffix == ".blend":
             print(f"Skipping non-blend file {blendfile}")
             continue
-
+        
+        print(blendfile)
+        bpy.ops.wm.open_mainfile(filepath=str(blendfile))
         folder = export_scene(
             blendfile,
             args.output_folder,

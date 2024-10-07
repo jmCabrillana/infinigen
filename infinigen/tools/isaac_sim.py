@@ -12,9 +12,10 @@ import numpy as np
 # CONFIG = {"renderer": "RayTracedLighting", "headless": False}
 # simulation_app = SimulationApp(launch_config=CONFIG)
 
-# from omni.isaac.lab.app import AppLauncher
-# app_launcher = AppLauncher(headless=True)
-# simulation_app = app_launcher.app
+from omni.isaac.lab.app import AppLauncher
+if __name__ == "__main__":
+    app_launcher = AppLauncher(headless=True)
+    simulation_app = app_launcher.app
 
 import omni
 from omni.isaac.core import World
@@ -33,6 +34,8 @@ from omni.isaac.core.utils.types import ArticulationAction
 from omni.isaac.wheeled_robots.robots import WheeledRobot
 from omni.physx.scripts import utils
 
+import omni.isaac.lab.sim as sim_utils
+
 
 class RobotController(BaseController):
     def __init__(self):
@@ -42,19 +45,21 @@ class RobotController(BaseController):
         return ArticulationAction(joint_velocities=[2, 2])
 
 class InfinigenIsaacSceneCFG:
-        scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/my_export/export_scene.blend/export_scene.usdc'
-        json_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/indoors/coarse/solve_state.json'
+        # scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/my_export/export_scene.blend/export_scene.usda'
+        # json_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/my_export/solve_state.json'
+        # scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/hello_world/coarse/my_export/export_scene.blend/export_scene.usdc'
+        # json_path = None
+        scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/hello_world/fine/my_export/export_scene.blend/export_scene.usdc'
+        json_path = None
 
 class InfinigenIsaacScene(object):
-    def __init__(self, cfg):
+    def __init__(self, cfg, world=None):
         self.cfg = cfg
-        self.world = World(
-            stage_units_in_meters=1.0, backend="numpy", physics_dt=1 / 400.0
-        )
-        self.world._physics_context.set_gravity(-9.8)
-        self.scene = self.world.scene
+        self.world = world
+        self.scene = None
+        if world is not None:
+            self.scene = self.world.scene
         self._support = None
-        self.setup_scene()
 
     def setup_scene(self):
         self._add_infinigen_scene()
@@ -62,12 +67,14 @@ class InfinigenIsaacScene(object):
         self._add_robot()
 
     def _add_infinigen_scene(self):
-        create_prim(
-            prim_path="/World/Support0",
-            usd_path=self.cfg.scene_path,
-            semantic_label="scene",
-        )
-        self._support = XFormPrim(prim_path="/World/Support0", name="Support0")
+        cfg = sim_utils.UsdFileCfg(usd_path=self.cfg.scene_path)
+        cfg.func("/World/Support", cfg, translation=(0.0, 0.0, 0.0))
+        # create_prim(
+        #     prim_path="/World/Support",
+        #     usd_path=self.cfg.scene_path,
+        #     semantic_label="scene",
+        # )
+        self._support = XFormPrim(prim_path="/World/Support", name="Support")
 
         stage = omni.usd.get_context().get_stage()
 
@@ -75,7 +82,7 @@ class InfinigenIsaacScene(object):
         if self.cfg.json_path is None:
             for prim in prims:
                 utils.setStaticCollider(prim)
-            self.scene.add(self._support)
+            # self.scene.add(self._support)
             return
 
         with open(self.cfg.json_path) as json_file:
@@ -116,7 +123,7 @@ class InfinigenIsaacScene(object):
             else:
                 utils.setRigidBody(prim, "convexDecomposition", False)
 
-        self.scene.add(self._support)
+        # self.scene.add(self._support)
 
     def _add_lighting(self):
         omni_exec(
@@ -187,9 +194,11 @@ if __name__ == "__main__":
     parser.add_argument("--json-path", type=str)
     args = parser.parse_args()
 
-    # scene = InfinigenIsaacScene(args)
-    scene = InfinigenIsaacScene(InfinigenIsaacScene)
-
+    world = World(stage_units_in_meters=1.0, backend="numpy", physics_dt=1/400.0)
+    world._physics_context.set_gravity(-9.8)
+    # scene = InfinigenIsaacScene(args, world=world)
+    scene = InfinigenIsaacScene(InfinigenIsaacScene, world=world)
+    scene.setup_scene()
     scene.reset()
     scene.run()
     simulation_app.close()
