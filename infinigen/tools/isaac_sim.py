@@ -68,7 +68,7 @@ class InfinigenIsaacScene(object):
 
     def _add_infinigen_scene(self):
         cfg = sim_utils.UsdFileCfg(usd_path=self.cfg.scene_path)
-        cfg.func("/World/Support", cfg, translation=(0.0, 0.0, 0.0))
+        cfg.func("/World/Support", cfg, translation=(0.0, 0.0, -1.0))
         # create_prim(
         #     prim_path="/World/Support",
         #     usd_path=self.cfg.scene_path,
