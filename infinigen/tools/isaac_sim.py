@@ -7,6 +7,7 @@
 
 import json
 import numpy as np
+from pathlib import Path
 
 # from omni.isaac.kit import SimulationApp
 # CONFIG = {"renderer": "RayTracedLighting", "headless": False}
@@ -36,7 +37,6 @@ from omni.physx.scripts import utils
 
 import omni.isaac.lab.sim as sim_utils
 
-
 class RobotController(BaseController):
     def __init__(self):
         super().__init__(name="robot_controller")
@@ -45,12 +45,13 @@ class RobotController(BaseController):
         return ArticulationAction(joint_velocities=[2, 2])
 
 class InfinigenIsaacSceneCFG:
-        # scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/my_export/export_scene.blend/export_scene.usda'
-        # json_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/my_export/solve_state.json'
-        # scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/hello_world/coarse/my_export/export_scene.blend/export_scene.usdc'
-        # json_path = None
-        scene_path = '/isaac-sim/memoryPerceiver/infinigen/outputs/hello_world/fine/my_export/export_scene.blend/export_scene.usdc'
-        json_path = None
+    infinigen_dir = Path(__file__).parent.parent.parent
+    # scene_path = infinigen_dir / 'outputs/my_export/export_scene.blend/export_scene.usda'
+    # json_path = infinigen_dir / 'outputs/my_export/solve_state.json'
+    # scene_path = infinigen_dir / 'outputs/hello_world/coarse/my_export/export_scene.blend/export_scene.usdc'
+    # json_path = None
+    scene_path = infinigen_dir / 'outputs/hello_world/fine/my_export/export_scene.blend/export_scene.usdc'
+    json_path = None
 
 class InfinigenIsaacScene(object):
     def __init__(self, cfg, world=None):
