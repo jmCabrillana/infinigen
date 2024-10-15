@@ -219,6 +219,8 @@ def delete_objects():
 
     if bpy.data.objects.get("atmosphere"):
         bpy.data.objects.remove(bpy.data.objects["atmosphere"], do_unlink=True)
+    if bpy.data.objects.get("atmosphere_fine"):
+        bpy.data.objects.remove(bpy.data.objects["atmosphere_fine"], do_unlink=True)
 
     if bpy.data.objects.get("KoleClouds"):
         bpy.data.objects.remove(bpy.data.objects["KoleClouds"], do_unlink=True)
@@ -417,6 +419,7 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
     img = bpy.data.images.new(f"{obj.name}_{bake_type}", img_size, img_size)
     clean_name = (obj.name).replace(" ", "_").replace(".", "_")
     file_path = dest / f"{clean_name}_{bake_type}.png"
+    print(f"Baking: {clean_name} with {bake_type}")
     dest = dest / "textures"
 
     bake_obj = False
