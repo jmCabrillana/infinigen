@@ -69,7 +69,7 @@ class InfinigenIsaacScene(object):
 
     def _add_infinigen_scene(self):
         cfg = sim_utils.UsdFileCfg(usd_path=self.cfg.scene_path)
-        cfg.func("/World/Support", cfg, translation=(0.0, 0.0, -4.0))
+        cfg.func("/World/Support", cfg, translation=(0.0, 0.0, -1.1))
         # create_prim(
         #     prim_path="/World/Support",
         #     usd_path=self.cfg.scene_path,
@@ -82,7 +82,11 @@ class InfinigenIsaacScene(object):
         prims = [prim for prim in stage.Traverse() if prim.IsA(UsdGeom.Mesh)]
         if self.cfg.json_path is None:
             for prim in prims:
-                utils.setStaticCollider(prim)
+                prim_name = prim.GetName()
+                if "terrain" in prim_name or "Terrain" in prim_name:
+                    utils.setStaticCollider(prim, approximationShape="meshSimplification")
+                else:
+                    utils.setStaticCollider(prim, approximationShape="convexHull")
             # self.scene.add(self._support)
             return
 
