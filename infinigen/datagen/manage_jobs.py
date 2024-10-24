@@ -108,6 +108,7 @@ def slurm_submit_cmd(
     gpus=0,
     hours=1,
     slurm_account=None,
+    slurm_nodelist=None,
     slurm_partition=None,
     slurm_exclude: list = None,
     slurm_niceness=None,
@@ -129,6 +130,7 @@ def slurm_submit_cmd(
 
     if gpus > 0:
         executor.update_parameters(gpus_per_node=gpus)
+
     if slurm_account is not None:
         if slurm_account == f"ENVVAR_{PARTITION_ENVVAR}":
             slurm_account = os.environ.get(PARTITION_ENVVAR)
@@ -149,6 +151,9 @@ def slurm_submit_cmd(
 
     if slurm_partition is not None:
         slurm_additional_params["partition"] = slurm_partition
+
+    if slurm_nodelist is not None:
+        slurm_additional_params["nodelist"] = slurm_nodelist
 
     executor.update_parameters(slurm_additional_parameters=slurm_additional_params)
 
@@ -674,7 +679,7 @@ def manage_datagen_jobs(all_scenes, elapsed, num_concurrent, disk_sleep_threshol
         print(message)
         if wandb is not None:
             wandb.alert(
-                title=f"{args.output_folder} full",
+                title=f"{args.output_folder.name} sleeping for full disk",
                 text=message,
                 wait_duration=3 * 60 * 60,
             )

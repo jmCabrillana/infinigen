@@ -257,7 +257,7 @@ def update_visibility():
         obj_view[obj] = obj.hide_render
         obj.hide_viewport = True
         obj.hide_render = True
-        obj.hide_set(0) 
+        obj.hide_set(0)
 
     return collection_view, obj_view
 
@@ -658,24 +658,7 @@ def bake_object(obj, dest, img_size, export_usd):
         return
 
     bpy.ops.object.select_all(action="DESELECT")
-    obj.select_set(True)
 
-    # for slot in obj.material_slots:
-    #     mat = slot.material
-    #     if mat is not None:
-    #         slot.material = (
-    #             mat.copy()
-    #         )  # we duplicate in the case of distinct meshes sharing materials
-
-    # process_glass_materials(obj, export_usd)
-
-    # bake_metal(obj, dest, img_size, export_usd)
-    # bake_normals(obj, dest, img_size, export_usd)
-
-    # paramDict = process_interfering_params(obj)
-
-    # for bake_type in BAKE_TYPES:
-    #     bake_pass(obj, dest, img_size, bake_type, export_usd)
     with butil.SelectObjects(obj):
         for slot in obj.material_slots:
             mat = slot.material
@@ -684,15 +667,15 @@ def bake_object(obj, dest, img_size, export_usd):
                     mat.copy()
                 )  # we duplicate in the case of distinct meshes sharing materials
 
-    # apply_baked_tex(obj, paramDict)
-    process_glass_materials(obj, export_usd)
-    bake_metal(obj, dest, img_size, export_usd)
-    bake_normals(obj, dest, img_size, export_usd)
-    paramDict = process_interfering_params(obj)
-    for bake_type in BAKE_TYPES:
-        bake_pass(obj, dest, img_size, bake_type, export_usd)
+        process_glass_materials(obj, export_usd)
+        bake_metal(obj, dest, img_size, export_usd)
+        bake_normals(obj, dest, img_size, export_usd)
+        paramDict = process_interfering_params(obj)
+        for bake_type in BAKE_TYPES:
+            bake_pass(obj, dest, img_size, bake_type, export_usd)
 
-    obj.select_set(False)
+        apply_baked_tex(obj, paramDict)
+
 
 
 def bake_scene(folderPath: Path, image_res, vertex_colors, export_usd):
@@ -1012,9 +995,9 @@ def main(args):
         if not blendfile.suffix == ".blend":
             print(f"Skipping non-blend file {blendfile}")
             continue
-        
-        print(blendfile)
+
         bpy.ops.wm.open_mainfile(filepath=str(blendfile))
+
         folder = export_scene(
             blendfile,
             args.output_folder,
