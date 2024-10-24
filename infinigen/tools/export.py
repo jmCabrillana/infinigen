@@ -223,6 +223,8 @@ def delete_objects():
 
     if bpy.data.objects.get("atmosphere"):
         bpy.data.objects.remove(bpy.data.objects["atmosphere"], do_unlink=True)
+    if bpy.data.objects.get("atmosphere_fine"):
+        bpy.data.objects.remove(bpy.data.objects["atmosphere_fine"], do_unlink=True)
 
     if bpy.data.objects.get("KoleClouds"):
         bpy.data.objects.remove(bpy.data.objects["KoleClouds"], do_unlink=True)
@@ -422,6 +424,7 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
     img = bpy.data.images.new(f"{obj.name}_{bake_type}", img_size, img_size)
     clean_name = (obj.name).replace(" ", "_").replace(".", "_")
     file_path = dest / f"{clean_name}_{bake_type}.png"
+    print(f"Baking: {clean_name} with {bake_type}")
     dest = dest / "textures"
 
     bake_obj = False
@@ -474,9 +477,12 @@ def bake_pass(obj, dest: Path, img_size, bake_type, export_usd):
 
     if bake_obj:
         logging.info(f"Baking {bake_type} pass")
-        bpy.ops.object.bake(
-            type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL"
-        )
+        try:
+            bpy.ops.object.bake(
+                type=internal_bake_type, pass_filter={"COLOR"}, save_mode="EXTERNAL"
+            )
+        except Exception as e:
+            print(e)
         img.filepath_raw = str(file_path)
         if not export_usd:
             img.save()
@@ -671,6 +677,7 @@ def bake_object(obj, dest, img_size, export_usd):
         apply_baked_tex(obj, paramDict)
 
 
+
 def bake_scene(folderPath: Path, image_res, vertex_colors, export_usd):
     for obj in bpy.data.objects:
         logging.info("---------------------------")
@@ -850,7 +857,7 @@ def export_single_obj(
 
     return export_file
 
-
+bpy.context.scene
 @gin.configurable
 def export_curr_scene(
     output_folder: Path,
@@ -1001,7 +1008,7 @@ def main(args):
             omniverse_export=args.omniverse,
         )
         # wanted to use shutil here but kept making corrupted files
-        subprocess.call(["zip", "-r", str(folder.with_suffix(".zip")), str(folder)])
+        # subprocess.call(["zip", "-r", str(folder.with_suffix(".zip")), str(folder)])
 
     bpy.ops.wm.quit_blender()
 

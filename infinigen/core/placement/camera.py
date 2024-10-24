@@ -285,7 +285,7 @@ def camera_pose_proposal(
         loc = location_sample()
         curr_alt = animation_policy.get_altitude(loc, scene_bvh)
         if curr_alt is None:
-            logger.debug(f"camera_pose_proposal got {curr_alt=} for {loc=}")
+            logger.debug(f"camera_pose_proposal got" ) # {str(curr_alt)} for {str(loc)}")
             # butil.spawn_empty("fail")
             return None
         desired_alt = random_general(altitude)

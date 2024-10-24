@@ -6,15 +6,25 @@
 # Acknowledgement: This file draws inspiration from https://docs.omniverse.nvidia.com/isaacsim/latest/index.html
 
 import json
-
 import numpy as np
+from pathlib import Path
+
+# from omni.isaac.kit import SimulationApp
+# CONFIG = {"renderer": "RayTracedLighting", "headless": False}
+# simulation_app = SimulationApp(launch_config=CONFIG)
+
+from omni.isaac.lab.app import AppLauncher
+if __name__ == "__main__":
+    app_launcher = AppLauncher(headless=True)
+    simulation_app = app_launcher.app
+
 import omni
 from omni.isaac.core import World
 from omni.isaac.core.prims import XFormPrim
 from omni.isaac.core.utils.extensions import enable_extension
 from omni.isaac.core.utils.nucleus import get_assets_root_path
 from omni.isaac.core.utils.prims import create_prim
-from omni.isaac.kit import SimulationApp
+
 from omni.kit.commands import execute as omni_exec
 from pxr import Sdf, Usd, UsdGeom, UsdLux
 
@@ -25,9 +35,7 @@ from omni.isaac.core.utils.types import ArticulationAction
 from omni.isaac.wheeled_robots.robots import WheeledRobot
 from omni.physx.scripts import utils
 
-CONFIG = {"renderer": "RayTracedLighting", "headless": False}
-simulation_app = SimulationApp(launch_config=CONFIG)
-
+import omni.isaac.lab.sim as sim_utils
 
 class RobotController(BaseController):
     def __init__(self):
@@ -36,17 +44,23 @@ class RobotController(BaseController):
     def forward(self):
         return ArticulationAction(joint_velocities=[2, 2])
 
+class InfinigenIsaacSceneCFG:
+    infinigen_dir = Path(__file__).parent.parent.parent
+    # scene_path = str(infinigen_dir / 'outputs/my_export/export_scene.blend/export_scene.usda')
+    # json_path = str(infinigen_dir / 'outputs/my_export/solve_state.json')
+    # scene_path = str(infinigen_dir / 'outputs/hello_world/coarse/my_export/export_scene.blend/export_scene.usdc')
+    # json_path = None
+    scene_path = str(infinigen_dir / 'outputs/hello_world/fine/my_export/export_scene.blend/export_scene.usdc')
+    json_path = None
 
 class InfinigenIsaacScene(object):
-    def __init__(self, cfg):
+    def __init__(self, cfg, world=None):
         self.cfg = cfg
-        self.world = World(
-            stage_units_in_meters=1.0, backend="numpy", physics_dt=1 / 400.0
-        )
-        self.world._physics_context.set_gravity(-9.8)
-        self.scene = self.world.scene
+        self.world = world
+        self.scene = None
+        if world is not None:
+            self.scene = self.world.scene
         self._support = None
-        self.setup_scene()
 
     def setup_scene(self):
         self._add_infinigen_scene()
@@ -54,11 +68,13 @@ class InfinigenIsaacScene(object):
         self._add_robot()
 
     def _add_infinigen_scene(self):
-        create_prim(
-            prim_path="/World/Support",
-            usd_path=self.cfg.scene_path,
-            semantic_label="scene",
-        )
+        cfg = sim_utils.UsdFileCfg(usd_path=self.cfg.scene_path)
+        cfg.func("/World/Support", cfg, translation=(0.0, 0.0, -1.1))
+        # create_prim(
+        #     prim_path="/World/Support",
+        #     usd_path=self.cfg.scene_path,
+        #     semantic_label="scene",
+        # )
         self._support = XFormPrim(prim_path="/World/Support", name="Support")
 
         stage = omni.usd.get_context().get_stage()
@@ -66,8 +82,12 @@ class InfinigenIsaacScene(object):
         prims = [prim for prim in stage.Traverse() if prim.IsA(UsdGeom.Mesh)]
         if self.cfg.json_path is None:
             for prim in prims:
-                utils.setStaticCollider(prim)
-            self.scene.add(self._support)
+                prim_name = prim.GetName()
+                if "terrain" in prim_name or "Terrain" in prim_name:
+                    utils.setStaticCollider(prim, approximationShape="meshSimplification")
+                else:
+                    utils.setStaticCollider(prim, approximationShape="convexHull")
+            # self.scene.add(self._support)
             return
 
         with open(self.cfg.json_path) as json_file:
@@ -108,7 +128,7 @@ class InfinigenIsaacScene(object):
             else:
                 utils.setRigidBody(prim, "convexDecomposition", False)
 
-        self.scene.add(self._support)
+        # self.scene.add(self._support)
 
     def _add_lighting(self):
         omni_exec(
@@ -131,19 +151,19 @@ class InfinigenIsaacScene(object):
             create_default_xform=True,
         )
 
-    def _get_camera_loc(self):
-        stage = omni.usd.get_context().get_stage()
-        prim = stage.GetPrimAtPath("/World/Support/CameraRigs_0_0")
-        xform = UsdGeom.Xformable(prim)
-        transform_matrix = xform.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-        translation = transform_matrix.ExtractTranslation()
-        translation[2] = 0
-        return translation, [1, 0, 0, 0]
+    # def _get_camera_loc(self):
+    #     stage = omni.usd.get_context().get_stage()
+    #     prim = stage.GetPrimAtPath("/World/Support/CameraRigs_0_0")
+    #     xform = UsdGeom.Xformable(prim)
+    #     transform_matrix = xform.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+    #     translation = transform_matrix.ExtractTranslation()
+    #     translation[2] = 0
+    #     return translation, [1, 0, 0, 0]
 
     def _add_robot(self):
         robot_path = get_assets_root_path() + "/Isaac/Robots/Jetbot/jetbot.usd"
-        init_pos, _ = self._get_camera_loc()
-        init_pos[-1] += 0.3
+        # init_pos, _ = self._get_camera_loc()
+        # init_pos[-1] += 0.3
         self.robot = self.scene.add(
             WheeledRobot(
                 prim_path="/World/Robot",
@@ -151,7 +171,7 @@ class InfinigenIsaacScene(object):
                 wheel_dof_names=["left_wheel_joint", "right_wheel_joint"],
                 create_robot=True,
                 usd_path=robot_path,
-                position=init_pos,
+                # position=init_pos,
             )
         )
         self.robot.set_local_scale(np.array([4, 4, 4]))
@@ -179,8 +199,11 @@ if __name__ == "__main__":
     parser.add_argument("--json-path", type=str)
     args = parser.parse_args()
 
-    scene = InfinigenIsaacScene(args)
-
+    world = World(stage_units_in_meters=1.0, backend="numpy", physics_dt=1/400.0)
+    world._physics_context.set_gravity(-9.8)
+    # scene = InfinigenIsaacScene(args, world=world)
+    scene = InfinigenIsaacScene(InfinigenIsaacScene, world=world)
+    scene.setup_scene()
     scene.reset()
     scene.run()
     simulation_app.close()
