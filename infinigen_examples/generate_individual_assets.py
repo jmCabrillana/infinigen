@@ -167,7 +167,7 @@ def build_scene_surface(args, factory_name, idx):
             if not hasattr(scatter, "apply"):
                 raise ValueError(f"{scatter} has no apply()")
 
-            if args.dryun:
+            if args.dryrun:
                 return
 
             bpy.ops.mesh.primitive_grid_add(
@@ -485,8 +485,7 @@ def main(args):
 
     if len(factories) == 1 and factories[0].endswith(".txt"):
         factories = [
-            f.split(".")[-1] 
-            for f in load_txt_list(factories[0], skip_sharp=False)
+            f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)
         ]
     else:
         assert not any(f.endswith(".txt") for f in factories)

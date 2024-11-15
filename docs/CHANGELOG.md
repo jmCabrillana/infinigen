@@ -130,3 +130,17 @@ v1.9.1
 - Fix integration test image titles 
 - Fix integration test asset image alignment
 - Make multistory houses disabled by default
+
+v1.10.0
+- Add Configuring Cameras documentation
+- Add config for multiview cameras surrounding a point of interest
+- Add MaterialSegmentation output pass
+- Add passthrough mode to direct manage_jobs stdout directly to terminal
+- Add "copyfile:destination" upload mode
+
+v1.10.1
+- Fix missing validity checks for camera-rig cameras which are not the 0th index
+- Fix missing seat in dining chair
+
+v1.11.0
+- Update to Blender == 4.2.0
