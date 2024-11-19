@@ -19,7 +19,7 @@ FORMAT_CHOICES = ["fbx", "obj", "usdc", "usda", "stl", "ply"]
 BAKE_TYPES = {
     "DIFFUSE": "Base Color",
     "ROUGHNESS": "Roughness",
-}  #  'EMIT':'Emission' #  "GLOSSY": 'Specular', 'TRANSMISSION':'Transmission' don't export
+}  # 'EMIT':'Emission Color' #  "GLOSSY": 'Specular IOR Level', 'TRANSMISSION':'Transmission Weight' don't export
 SPECIAL_BAKE = {"METAL": "Metallic", "NORMAL": "Normal"}
 ALL_BAKE = BAKE_TYPES | SPECIAL_BAKE
 
@@ -362,12 +362,12 @@ def apply_baked_tex(obj, paramDict={}):
             principled_bsdf_node.inputs["Metallic"].default_value = paramDict[mat.name][
                 "Metallic"
             ]
-            principled_bsdf_node.inputs["Sheen"].default_value = paramDict[mat.name][
-                "Sheen"
-            ]
-            principled_bsdf_node.inputs["Clearcoat"].default_value = paramDict[
+            principled_bsdf_node.inputs["Sheen Weight"].default_value = paramDict[
                 mat.name
-            ]["Clearcoat"]
+            ]["Sheen Weight"]
+            principled_bsdf_node.inputs["Coat Weight"].default_value = paramDict[
+                mat.name
+            ]["Coat Weight"]
 
 
 def create_glass_shader(node_tree, export_usd):
@@ -389,7 +389,7 @@ def create_glass_shader(node_tree, export_usd):
     else:
         principled_bsdf_node.inputs["Roughness"].default_value = 0
 
-    principled_bsdf_node.inputs["Transmission"].default_value = 1
+    principled_bsdf_node.inputs["Transmission Weight"].default_value = 1
     if export_usd:
         principled_bsdf_node.inputs["Alpha"].default_value = 0
     node_tree.links.new(
@@ -566,16 +566,16 @@ def remove_params(mat, node_tree):
         metal = principled_bsdf_node.inputs[
             "Metallic"
         ].default_value  # store metallic value and set to 0
-        sheen = principled_bsdf_node.inputs["Sheen"].default_value
-        clearcoat = principled_bsdf_node.inputs["Clearcoat"].default_value
+        sheen = principled_bsdf_node.inputs["Sheen Weight"].default_value
+        clearcoat = principled_bsdf_node.inputs["Coat Weight"].default_value
         paramDict[mat.name] = {
             "Metallic": metal,
-            "Sheen": sheen,
-            "Clearcoat": clearcoat,
+            "Sheen Weight": sheen,
+            "Coat Weight": clearcoat,
         }
         principled_bsdf_node.inputs["Metallic"].default_value = 0
-        principled_bsdf_node.inputs["Sheen"].default_value = 0
-        principled_bsdf_node.inputs["Clearcoat"].default_value = 0
+        principled_bsdf_node.inputs["Sheen Weight"].default_value = 0
+        principled_bsdf_node.inputs["Coat Weight"].default_value = 0
         return paramDict
 
     for node in nodes:
@@ -963,9 +963,10 @@ def export_curr_scene(
             ):
                 continue
 
-            export_subfolder = export_folder / obj.name
-            export_subfolder.mkdir(exist_ok=True)
-            export_file = export_subfolder / f"{obj.name}.{format}"
+            obj_name = obj.name.replace('/', '_')
+            export_subfolder = export_folder / obj_name
+            export_subfolder.mkdir(exist_ok=True, parents=True)
+            export_file = export_subfolder / f"{obj_name}.{format}"
 
             logging.info(f"Exporting file to {export_file=}")
             obj.hide_viewport = False

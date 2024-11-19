@@ -23,8 +23,15 @@ from pathlib import Path
 import bpy
 import gin
 import numpy as np
-import submitit
 from PIL import Image
+
+try:
+    import submitit
+except ImportError:
+    logging.warning(
+        f"Failed to import submitit, {Path(__file__).name} will crash if slurm job is requested"
+    )
+    submitit = None
 
 # ruff: noqa: E402
 # NOTE: logging config has to be before imports that use logging
@@ -167,7 +174,7 @@ def build_scene_surface(args, factory_name, idx):
             if not hasattr(scatter, "apply"):
                 raise ValueError(f"{scatter} has no apply()")
 
-            if args.dryun:
+            if args.dryrun:
                 return
 
             bpy.ops.mesh.primitive_grid_add(
@@ -448,6 +455,9 @@ def mapfunc(
         with Pool(args.n_workers) as p:
             return list(p.imap(f, its))
     else:
+        if submitit is None:
+            raise ValueError("submitit not imported, cannot use --slurm")
+
         executor = submitit.AutoExecutor(folder=args.output_folder / "logs")
 
         slurm_additional_parameters = {}
@@ -485,8 +495,7 @@ def main(args):
 
     if len(factories) == 1 and factories[0].endswith(".txt"):
         factories = [
-            f.split(".")[-1] 
-            for f in load_txt_list(factories[0], skip_sharp=False)
+            f.split(".")[-1] for f in load_txt_list(factories[0], skip_sharp=False)
         ]
     else:
         assert not any(f.endswith(".txt") for f in factories)

@@ -130,3 +130,26 @@ v1.9.1
 - Fix integration test image titles 
 - Fix integration test asset image alignment
 - Make multistory houses disabled by default
+
+v1.10.0
+- Add Configuring Cameras documentation
+- Add config for multiview cameras surrounding a point of interest
+- Add MaterialSegmentation output pass
+- Add passthrough mode to direct manage_jobs stdout directly to terminal
+- Add "copyfile:destination" upload mode
+
+v1.10.1
+- Fix missing validity checks for camera-rig cameras which are not the 0th index
+- Fix missing seat in dining chair
+
+v1.11.0
+- Update to Blender == 4.2.0
+
+v1.11.1
+- Fix failed camera search when canyon/cliff/cave loaded as nature background
+- Fix scrambled GT maps in blender_gt due to incorrect OpenEXR pixel unpack ordering
+- Fix save_mesh kwarg mismatch from v1.10.0
+- Remove `frozendict` dependency, make `geomdl` optional if not using creatures
+- Make `submitit` optional if not using SLURM
+- Make blender addons optional if not using relevant assets (rocks/terrain/snowlayer)
+- Make `bnurbs` CPython module optional and not installed by default

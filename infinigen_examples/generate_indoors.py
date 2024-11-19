@@ -252,6 +252,8 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
             camera_rigs,
             scene_preprocessed=scene_preprocessed,
             init_surfaces=solved_floor_surface,
+            nonroom_objs=nonroom_objs,
+            terrain_coverage_range=None,  # do not filter cameras by terrain visibility, even if nature scenetype configs request this
         )
         butil.delete(solved_floor_surface)
         return scene_preprocessed
@@ -259,7 +261,13 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     scene_preprocessed = p.run_stage("pose_cameras", pose_cameras, use_chance=False)
 
     def animate_cameras():
-        cam_util.animate_cameras(camera_rigs, solved_bbox, scene_preprocessed, pois=[])
+        cam_util.animate_cameras(
+            camera_rigs,
+            solved_bbox,
+            scene_preprocessed,
+            pois=[],
+            terrain_coverage_range=None,  # same as above - do not filter by terrain visiblity when indoors
+        )
 
         frames_folder = output_folder.parent / "frames"
         animated_cams = [cam for cam in camera_rigs if cam.animation_data is not None]
@@ -309,7 +317,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
 
         placer = FloatingObjectPlacement(
             generators=facs,
-            camera=cam_util.get_camera(0, 0),
+            camera=camera_rigs[0].children[0],
             background_objs=list(pholder_cutters.objects) + list(pholder_rooms.objects),
             collision_objs=list(pholder_objs.objects),
         )
@@ -388,8 +396,6 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
     # state.print()
     state.to_json(output_folder / "solve_state.json")
 
-    cam = cam_util.get_camera(0, 0)
-
     def turn_off_lights():
         for o in bpy.data.objects:
             if o.type == "LIGHT" and not o.data.cycles.is_portal:
@@ -430,7 +436,7 @@ def compose_indoors(output_folder: Path, scene_seed: int, **overrides):
         create_outdoor_backdrop,
         terrain,
         house_bbox=house_bbox,
-        cam=cam,
+        cameras=[rig.children[0] for rig in camera_rigs],
         p=p,
         params=overrides,
         use_chance=False,
@@ -553,6 +559,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", type=str, nargs="*", default=None)
 
     args = init.parse_args_blender(parser)
+
     logging.getLogger("infinigen").setLevel(logging.INFO)
     logging.getLogger("infinigen.core.nodes.node_wrangler").setLevel(logging.CRITICAL)
 
