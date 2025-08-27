@@ -14,9 +14,7 @@ coverage.xml
 */rclone.zip
 */miniconda.sh
 
-.vscode
 */wandb
-.vscode
 
 slurm-*.out
 __pycache__
@@ -72,3 +70,7 @@ blends
 
 process_mesh
 worldgen
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
